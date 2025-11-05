@@ -3,17 +3,19 @@ import { useEffect, useMemo, useState } from 'react';
 import JobList from './components/JobList';
 import SearchBar from './components/SearchBar';
 import SourceToggle from './components/SourceToggle';
-import { loadJobsFromLocalStorage, loadSeedJobs, saveJobsToLocalStorage, exportJobsToFile, importJobsFromFile } from './services/storage';
+import { loadJobsFromLocalStorage, loadSeedJobs, saveJobsToLocalStorage } from './services/storage';
 import { mergeJobs } from './services/aggregate';
 import { fetchMuseJobs } from './services/providers/muse';
 import { fetchRemoteOkJobs } from './services/providers/remoteok';
+import { fetchRemotiveJobs } from './services/providers/remotive';
+import { fetchArbeitnowJobs } from './services/providers/arbeitnow';
 
 function App() {
   const [jobs, setJobs] = useState([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [sources, setSources] = useState({ muse: true, remoteok: true });
+  const [sources, setSources] = useState({ muse: true, remoteok: true, remotive: true, arbeitnow: true });
   const [remoteOnly, setRemoteOnly] = useState(false);
 
   // Initial load: localStorage -> seed json -> empty
@@ -53,6 +55,8 @@ function App() {
       const tasks = [];
       if (sources.muse) tasks.push(fetchMuseJobs(query));
       if (sources.remoteok) tasks.push(fetchRemoteOkJobs(query));
+      if (sources.remotive) tasks.push(fetchRemotiveJobs(query));
+      if (sources.arbeitnow) tasks.push(fetchArbeitnowJobs(query));
       const results = await Promise.all(tasks);
       const incoming = results.flat();
       const merged = mergeJobs(jobs, incoming);
@@ -65,21 +69,7 @@ function App() {
     }
   }
 
-  async function handleImportFile(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const imported = await importJobsFromFile(file);
-      const merged = mergeJobs([], imported);
-      setJobs(merged);
-      saveJobsToLocalStorage(merged);
-    } catch (e) {
-      setError('Failed to import JSON.');
-    } finally {
-      // reset input value so same file can be re-imported
-      e.target.value = '';
-    }
-  }
+  // Import/Export removed by request.
 
   return (
     <div className="App" style={{ maxWidth: 920, margin: '0 auto', padding: 16 }}>
@@ -98,11 +88,7 @@ function App() {
         <button onClick={handleRefresh} disabled={loading} style={primary}>
           {loading ? 'Fetching…' : 'Fetch from Sources'}
         </button>
-        <button onClick={() => exportJobsToFile(jobs)} style={secondary}>Export JSON</button>
-        <label style={uploadLabel}>
-          Import JSON
-          <input type="file" accept="application/json" onChange={handleImportFile} style={{ display: 'none' }} />
-        </label>
+        {/* Import/Export controls removed by request */}
       </div>
 
       {error ? <div style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div> : null}
@@ -113,7 +99,6 @@ function App() {
 
 const primary = { padding: '8px 12px', borderRadius: 6, border: '1px solid #2563eb', background: '#2563eb', color: '#fff' };
 const secondary = { padding: '8px 12px', borderRadius: 6, border: '1px solid #6b7280', background: '#fff', color: '#374151' };
-const uploadLabel = { padding: '8px 12px', borderRadius: 6, border: '1px dashed #6b7280', background: '#fff', color: '#374151', cursor: 'pointer' };
 const btn = (on) => ({ padding: '8px 12px', borderRadius: 6, border: '1px solid ' + (on ? '#10b981' : '#9ca3af'), background: on ? '#10b981' : '#fff', color: on ? '#fff' : '#374151' });
 
 export default App;
