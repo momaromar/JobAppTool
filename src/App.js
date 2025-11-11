@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import JobList from './components/JobList';
 import SearchBar from './components/SearchBar';
 import SourceToggle from './components/SourceToggle';
-import { loadJobsFromLocalStorage, loadSeedJobs, saveJobsToLocalStorage } from './services/storage';
+import { loadJobsFromLocalStorage, loadSeedJobs, saveJobsToLocalStorage, clearJobsStorage } from './services/storage';
 import { mergeJobs } from './services/aggregate';
 import { fetchMuseJobs } from './services/providers/muse';
 import { fetchRemoteOkJobs } from './services/providers/remoteok';
@@ -16,12 +16,14 @@ function App() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [sources, setSources] = useState({ muse: true, remoteok: true, remotive: true, arbeitnow: true, jobspy: false });
+  const [sources, setSources] = useState({ muse: false, remoteok: false, remotive: false, arbeitnow: false, jobspy: false });
   const [remoteOnly, setRemoteOnly] = useState(false);
 
   // Initial load: localStorage -> seed json -> empty
   useEffect(() => {
     const boot = async () => {
+      // Clear any previously saved jobs on fresh load
+      clearJobsStorage();
       const persisted = loadJobsFromLocalStorage();
       if (Array.isArray(persisted) && persisted.length) {
         setJobs(persisted);

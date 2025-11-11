@@ -2,6 +2,14 @@
 
 const STORAGE_KEY = 'jobapptool.jobs.v1';
 
+export function clearJobsStorage() {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore storage access errors
+  }
+}
+
 export function loadJobsFromLocalStorage() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
