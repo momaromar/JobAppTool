@@ -9,13 +9,14 @@ import { fetchMuseJobs } from './services/providers/muse';
 import { fetchRemoteOkJobs } from './services/providers/remoteok';
 import { fetchRemotiveJobs } from './services/providers/remotive';
 import { fetchArbeitnowJobs } from './services/providers/arbeitnow';
+import { fetchJobSpyJobs } from './services/providers/jobspy';
 
 function App() {
   const [jobs, setJobs] = useState([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [sources, setSources] = useState({ muse: true, remoteok: true, remotive: true, arbeitnow: true });
+  const [sources, setSources] = useState({ muse: true, remoteok: true, remotive: true, arbeitnow: true, jobspy: false });
   const [remoteOnly, setRemoteOnly] = useState(false);
 
   // Initial load: localStorage -> seed json -> empty
@@ -57,6 +58,7 @@ function App() {
       if (sources.remoteok) tasks.push(fetchRemoteOkJobs(query));
       if (sources.remotive) tasks.push(fetchRemotiveJobs(query));
       if (sources.arbeitnow) tasks.push(fetchArbeitnowJobs(query));
+      if (sources.jobspy) tasks.push(fetchJobSpyJobs(query, { site: 'indeed', location: 'remote', limit: 50 }));
       const results = await Promise.all(tasks);
       const incoming = results.flat();
       const merged = mergeJobs(jobs, incoming);
